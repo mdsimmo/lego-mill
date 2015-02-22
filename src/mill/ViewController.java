@@ -26,7 +26,7 @@ public class ViewController implements AnalogListener, ActionListener {
 		this.application = application;
 		this.inputManager = application.getInputManager();
 		this.cam = application.getCamera();
-
+		cam.setFrustumPerspective(45f, (float) cam.getWidth() / cam.getHeight(), 0.01f, 1000f);
 		setUpKeys();
 	}
 

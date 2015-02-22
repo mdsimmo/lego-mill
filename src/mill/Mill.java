@@ -10,7 +10,7 @@ public interface Mill {
 	// all units are in mm or radians
 	public static final float STEP_DRILL_IN = 0.5f; // mm
 	public static final float STEP_CARRAGE_MOVE = 0.5f; // mm
-	public static final float STEP_CHUCK_ROTATE = FastMath.TWO_PI / 50; // radians
+	public static final float STEP_CHUCK_ROTATE = FastMath.TWO_PI / 360; // radians
 	public static final float MIN_DEPTH = -15;
 	public static final float MAXIMUM_DEPTH = 40; // mm
 	public static final float START_DEPTH = 0; // mm

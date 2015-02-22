@@ -14,7 +14,7 @@ public class PhysicalMill implements Mill {
 
 	private static final float DRILL_RATIO = 9.2f; // deg/mm
 	private static final float CARRAGE_RATIO = DRILL_RATIO * 12 / 16; // deg/mm
-	private static final float SPINDLE_RATIO = 56f / 12 * FastMath.RAD_TO_DEG; // degMotor/radSpindle
+	private static final float SPINDLE_RATIO = -56f / 12; // degMotor/degSpindle
 
 	RemoteMotor drill = Motor.A;
 	RemoteMotor carrage = Motor.B;
@@ -36,7 +36,7 @@ public class PhysicalMill implements Mill {
 
 	@Override
 	public void setDrillDepth( float depth ) {
-		drill.rotateTo( (int)( depth * DRILL_RATIO ) );
+		drill.rotateTo( (int)( depth * DRILL_RATIO ), true );
 		drillDepth = depth;
 	}
 
@@ -53,7 +53,7 @@ public class PhysicalMill implements Mill {
 
 	@Override
 	public void setCarrage( float distance ) {
-		carrage.rotateTo( (int)( distance * CARRAGE_RATIO ) );
+		carrage.rotateTo( (int)( distance * CARRAGE_RATIO ), true );
 		carrageDistance = distance;
 	}
 
@@ -70,13 +70,17 @@ public class PhysicalMill implements Mill {
 
 	@Override
 	public void setSpindle( float radians ) {
-		spindle.rotateTo( (int)( radians * SPINDLE_RATIO ) );
+		spindle.rotateTo( (int)( radians * SPINDLE_RATIO * FastMath.RAD_TO_DEG), true );
 		spindleRotation = radians;
 	}
 
 	@Override
 	public float getSpindle() {
 		return spindleRotation;
+	}
+	
+	public boolean isMoving() {
+		return drill.isMoving() || spindle.isMoving() || carrage.isMoving();
 	}
 
 }

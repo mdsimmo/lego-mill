@@ -5,6 +5,7 @@ import com.jme3.bounding.BoundingVolume;
 import com.jme3.collision.CollisionResults;
 import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
+import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
@@ -40,10 +41,16 @@ public class VirtualMill implements Mill {
 		floor.setLocalTranslation( 0, -Mill.MAXIMUM_DEPTH, 0 );
 		scene.attachChild( floor );
 
+		Vector3f lightSource = new Vector3f( -0.1f, -0.7f, -0.1f );
 		DirectionalLight light = new DirectionalLight();
-		light.setDirection( new Vector3f( -0.1f, -0.7f, -0.1f ) );
+		light.setDirection( lightSource );
+		light.setColor( ColorRGBA.White.mult( 0.8f ) );
 		scene.addLight( light );
 		
+		DirectionalLight backLight = new DirectionalLight();
+		backLight.setDirection( lightSource.mult( -1 ) );
+		backLight.setColor( ColorRGBA.White.mult( 0.3f ));
+		scene.addLight( backLight );
 	}
 
 	/**

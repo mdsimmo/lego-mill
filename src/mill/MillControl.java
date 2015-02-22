@@ -9,20 +9,22 @@ import com.jme3.scene.Spatial;
  */
 public class MillControl {
 
-	SimpleApplication app;
 	VirtualMill virtual;
 	PhysicalMill physical;
 	boolean hasColided;
-	boolean forwards = true;
+	boolean tickAcross;
+	int loops = 0;
 
 	public MillControl( SimpleApplication app, Spatial part ) {
-		this.app = app;
 		this.virtual = new VirtualMill( app );
 		this.virtual.setPart( part );
 		this.physical = new PhysicalMill();
 	}
+	
 
-	public void update() {
+	public boolean update() {
+		if ( physical.isMoving())
+			return false;
 		if ( !hasColided ) {
 			// move down until touching the part
 			virtual.tickDrillIn();
@@ -30,34 +32,37 @@ public class MillControl {
 					|| virtual.getDrillDepth() < Mill.MIN_DEPTH ) {
 				hasColided = true;
 				virtual.tickDrillOut();
-				float position = virtual.getCarrage();
-				if ( Mill.START_CARRAGE > position
-						|| position > Mill.MAXIMUM_CARRAGE ) {
-					if ( virtual.getSpindle() > FastMath.PI ) {
-						app.stop();
-						return;
-					}
-					virtual.tickSpindleForwards();
-					physical.tickSpindleForwards();
-					forwards = !forwards;
+				float position = physical.getSpindle();
+				if ( position > loops * FastMath.TWO_PI ) {
+					if ( virtual.getCarrage() >= Mill.MAXIMUM_CARRAGE )
+						return true;
+					tickAcross = true;
+					loops++;
+					virtual.tickCarrageForwards();
+					hasColided = true;
 				}
-				virtual.tickCarrage( forwards );
+				virtual.tickSpindleForwards();
 			} else {
 				physical.tickDrillIn();
 			}
 		}
 		if ( hasColided ) {
 			// move drill out then across
-			if ( virtual.isColision()
+			if ( virtual.isColision() 
 					&& virtual.getDrillDepth() < Mill.MAXIMUM_DEPTH ) {
 				// keep going out
 				virtual.tickDrillOut();
 				physical.tickDrillOut();
 			} else {
 				// safe to go across
-				physical.tickCarrage( forwards );
+				physical.tickSpindleForwards();
 				hasColided = false;
+				if ( tickAcross ) {
+					physical.tickCarrageForwards();
+					tickAcross = false;
+				}
 			}
 		}
+		return false;
 	}
 }
