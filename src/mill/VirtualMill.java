@@ -1,7 +1,6 @@
 package mill;
 
 import com.jme3.app.SimpleApplication;
-import com.jme3.bounding.BoundingVolume;
 import com.jme3.collision.CollisionResults;
 import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
@@ -10,81 +9,72 @@ import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Cylinder;
 
 /**
  * A mill that performs all actions in the virtual space
  */
 public class VirtualMill implements Mill {
 
-	Spatial drill;
-	Spatial part;
-	Node scene;
+	private final Node drill;
+	private final Spatial part;
+	private final Node scene;
 
-	public VirtualMill( SimpleApplication app ) {
+	public VirtualMill( SimpleApplication app, Spatial part ) {
 		scene = new Node( "mill" );
 		app.getRootNode().attachChild( scene );
 		scene.scale( 0.01f ); // get it into more normal units
+
+		Mesh drillMesh = new Cylinder( 10, 10, 2, 60, true );
+		Geometry drillGeo = new Geometry( "drill", drillMesh );
+		drillGeo.rotate( 0, FastMath.HALF_PI, 0 );
+		Material drillMaterial = new Material( app.getAssetManager(),
+				"Common/MatDefs/Misc/Unshaded.j3md" );
+		drillMaterial.setColor( "Color", ColorRGBA.Gray );
+		drillGeo.setMaterial( drillMaterial );
+		drillGeo.move( -60/2, 0, 0 );
+		drill = new Node( "drill" );
+		drill.attachChild( drillGeo );
+		scene.attachChild( drill );
+
+		this.part = part;
+		scene.attachChild( part );
 		
-		drill = app.getAssetManager().loadModel( "Models/drillSimple.blend" );
-		drill.rotate( 0, 0, FastMath.HALF_PI );
-		setDrill( drill );
-		
-		Box box = new Box( new Vector3f( Mill.START_DEPTH, 0,
-				Mill.START_CARRAGE ), new Vector3f( -Mill.MAXIMUM_DEPTH, 0.1f,
-				-Mill.MAXIMUM_CARRAGE ) );
+		Box box = new Box( 
+				new Vector3f( Mill.START_DEPTH, 0, Mill.START_CARRAGE ),
+				new Vector3f( -Mill.MAXIMUM_DEPTH, 0.1f, -Mill.MAXIMUM_CARRAGE ) );
 		Spatial floor = new Geometry( "floor", box );
 		floor.setMaterial( new Material( app.getAssetManager(),
 				"Common/MatDefs/Misc/Unshaded.j3md" ) );
 		floor.setLocalTranslation( 0, -Mill.MAXIMUM_DEPTH, 0 );
 		scene.attachChild( floor );
 
+		/*Vector3f size = new Vector3f( 26, 26, 0 );
+		Box foamSize = new Box( size.mult( -0.5f ), size.mult( 0.5f ));
+		Geometry geo = new Geometry( "foamSize", foamSize );
+		geo.setMaterial( new Material( app.getAssetManager(),
+				"Common/MatDefs/Misc/Unshaded.j3md" ) );
+		scene.attachChild( geo );*/
+		
 		Vector3f lightSource = new Vector3f( -0.1f, -0.7f, -0.1f );
 		DirectionalLight light = new DirectionalLight();
 		light.setDirection( lightSource );
 		light.setColor( ColorRGBA.White.mult( 0.8f ) );
 		scene.addLight( light );
-		
+
 		DirectionalLight backLight = new DirectionalLight();
 		backLight.setDirection( lightSource.mult( -1 ) );
-		backLight.setColor( ColorRGBA.White.mult( 0.3f ));
+		backLight.setColor( ColorRGBA.White.mult( 0.3f ) );
 		scene.addLight( backLight );
-	}
-
-	/**
-	 * Sets the drill spatial to use. This method should only be called before
-	 * before any of the movement methods are called. A default drill is
-	 * provided so it is not necercary to call this method.
-	 * 
-	 * @param drill
-	 *            the drill
-	 */
-	public void setDrill( Spatial drill ) {
-		if ( this.drill != null )
-			scene.detachChild( this.drill );
-		this.drill = drill;
-		drill.scale( 1000 ); // because blender works in meters
-		scene.attachChild( drill );
-	}
-
-	public void setDrillBounds( BoundingVolume bounds ) {
-		this.drill.setModelBound( bounds );
-	}
-
-	/**
-	 * Sets what part to use. This method should be called before any
-	 * 
-	 * @param part
-	 */
-	public void setPart( Spatial part ) {
-		if ( this.part != null )
-			scene.detachChild( this.part );
-		this.part = part;
-		part.scale( 1000 ); // because blender works in meters
-		scene.attachChild( part );
-		reset();
+		
+		// go to start position
+		setCarrage( START_CARRAGE );
+		setSpindle( START_ROTATION );
+		setDrillDepth( START_DEPTH );
 	}
 
 	@Override
@@ -119,7 +109,7 @@ public class VirtualMill implements Mill {
 
 	@Override
 	public void tickSpindle( boolean forwards ) {
-		part.rotate( 0, 0, ( forwards ? 1 : -1 ) * STEP_CHUCK_ROTATE );
+		part.rotate( 0, 0, ( forwards ? 1 : -1 ) * STEP_SPINDLE_ROTATE );
 	}
 
 	@Override

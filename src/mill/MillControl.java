@@ -1,5 +1,7 @@
 package mill;
 
+import lejos.nxt.Sound;
+
 import com.jme3.app.SimpleApplication;
 import com.jme3.math.FastMath;
 import com.jme3.scene.Spatial;
@@ -16,9 +18,8 @@ public class MillControl {
 	int loops = 0;
 
 	public MillControl( SimpleApplication app, Spatial part ) {
-		this.virtual = new VirtualMill( app );
-		this.virtual.setPart( part );
-		this.physical = new PhysicalMill();
+		this.virtual = new VirtualMill( app, part );
+		this.physical = Main.connected ? new PhysicalMill() : new DummyPhysicalMill();
 	}
 	
 
@@ -34,8 +35,10 @@ public class MillControl {
 				virtual.tickDrillOut();
 				float position = physical.getSpindle();
 				if ( position > loops * FastMath.TWO_PI ) {
-					if ( virtual.getCarrage() >= Mill.MAXIMUM_CARRAGE )
+					if ( physical.isAtEnd() ) {
+						end();
 						return true;
+					}
 					tickAcross = true;
 					loops++;
 					virtual.tickCarrageForwards();
@@ -64,5 +67,11 @@ public class MillControl {
 			}
 		}
 		return false;
+	}
+	
+	public void end() {
+		physical.setDrillDepth( Mill.MAXIMUM_DEPTH );
+		virtual.setDrillDepth( Mill.MAXIMUM_DEPTH );
+		Sound.beepSequenceUp();
 	}
 }

@@ -8,15 +8,15 @@ import com.jme3.math.FastMath;
 public interface Mill {
 
 	// all units are in mm or radians
-	public static final float STEP_DRILL_IN = 0.5f; // mm
-	public static final float STEP_CARRAGE_MOVE = 0.5f; // mm
-	public static final float STEP_CHUCK_ROTATE = FastMath.TWO_PI / 360; // radians
+	public static final float STEP_DRILL_IN = 0.1f; // mm
+	public static final float STEP_CARRAGE_MOVE = 1f; // mm
+	public static final float STEP_SPINDLE_ROTATE = FastMath.TWO_PI / 400; // radians
 	public static final float MIN_DEPTH = -15;
-	public static final float MAXIMUM_DEPTH = 40; // mm
-	public static final float START_DEPTH = 0; // mm
-	public static final float START_CARRAGE = 0; // mm
-	public static final float MAXIMUM_CARRAGE = 200f; // mm
+	public static final float MAXIMUM_DEPTH = 30; // mm
+	public static final float START_DEPTH = 30; // mm
 	public static final float START_ROTATION = 0; // radians
+	public static final float START_CARRAGE = 0; // mm
+	public static final float MAXIMUM_CARRAGE = 120; // mm (used only for presenting virtual mill)
 	
 	public default void tickDrillOut() {
 		tickDrill(false);
@@ -59,11 +59,5 @@ public interface Mill {
 	public void setSpindle( float radians );
 	
 	public float getSpindle();
-	
-	public default void reset() {
-		setDrillDepth( START_DEPTH );
-		setCarrage( START_CARRAGE );
-		setSpindle( START_ROTATION );
-	}
 	
 }

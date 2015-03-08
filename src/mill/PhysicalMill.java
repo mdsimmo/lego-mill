@@ -1,9 +1,11 @@
 package mill;
 
-import com.jme3.math.FastMath;
-
 import lejos.nxt.Motor;
+import lejos.nxt.SensorPort;
+import lejos.nxt.TouchSensor;
 import lejos.nxt.remote.RemoteMotor;
+
+import com.jme3.math.FastMath;
 
 /**
  * An object representing the physical mill. When this class is asked to do
@@ -12,31 +14,37 @@ import lejos.nxt.remote.RemoteMotor;
  */
 public class PhysicalMill implements Mill {
 
-	private static final float DRILL_RATIO = 9.2f; // deg/mm
-	private static final float CARRAGE_RATIO = DRILL_RATIO * 12 / 16; // deg/mm
+	private static final TouchSensor STOP_SENSOR = Main.connected ? new TouchSensor(
+			SensorPort.S1 ) : null;
+	private static final float DRILL_RATIO = -9.2f; // deg/mm
+	private static final float CARRAGE_RATIO = DRILL_RATIO * 12 / 16 * 24; // deg/mm
 	private static final float SPINDLE_RATIO = -56f / 12; // degMotor/degSpindle
 
-	RemoteMotor drill = Motor.A;
-	RemoteMotor carrage = Motor.B;
-	RemoteMotor spindle = Motor.C;
+	RemoteMotor drill = Main.connected ? Motor.A : null;
+	RemoteMotor carrage = Main.connected ? Motor.B : null;
+	RemoteMotor spindle = Main.connected ? Motor.C : null;
 
-	float drillDepth = 0;
-	float carrageDistance = 0;
-	float spindleRotation = 0;
+	float drillDepth = START_DEPTH;
+	float carrageDistance = START_CARRAGE;
+	float spindleRotation = START_ROTATION;
 
 	public PhysicalMill() {
-		reset();
+		if ( !Main.connected )
+			return;
+		carrage.resetTachoCount();
+		drill.resetTachoCount();
+		spindle.resetTachoCount();
 	}
 
 	@Override
 	public void tickDrill( boolean in ) {
-		drillDepth += STEP_DRILL_IN * ( in ? 1 : -1 );
+		drillDepth += STEP_DRILL_IN * ( in ? -1 : 1 );
 		setDrillDepth( drillDepth );
 	}
 
 	@Override
 	public void setDrillDepth( float depth ) {
-		drill.rotateTo( (int)( depth * DRILL_RATIO ), true );
+		drill.rotateTo( (int)( ( depth - START_DEPTH ) * DRILL_RATIO ), true );
 		drillDepth = depth;
 	}
 
@@ -53,7 +61,8 @@ public class PhysicalMill implements Mill {
 
 	@Override
 	public void setCarrage( float distance ) {
-		carrage.rotateTo( (int)( distance * CARRAGE_RATIO ), true );
+		carrage.rotateTo(
+				(int)( ( distance - START_CARRAGE ) * CARRAGE_RATIO ), true );
 		carrageDistance = distance;
 	}
 
@@ -64,13 +73,15 @@ public class PhysicalMill implements Mill {
 
 	@Override
 	public void tickSpindle( boolean forwards ) {
-		spindleRotation += STEP_CHUCK_ROTATE * ( forwards ? 1 : -1 );
+		spindleRotation += STEP_SPINDLE_ROTATE * ( forwards ? 1 : -1 );
 		setSpindle( spindleRotation );
 	}
 
 	@Override
 	public void setSpindle( float radians ) {
-		spindle.rotateTo( (int)( radians * SPINDLE_RATIO * FastMath.RAD_TO_DEG), true );
+		spindle.rotateTo(
+				(int)( ( radians - START_ROTATION ) * SPINDLE_RATIO * FastMath.RAD_TO_DEG ),
+				true );
 		spindleRotation = radians;
 	}
 
@@ -78,9 +89,13 @@ public class PhysicalMill implements Mill {
 	public float getSpindle() {
 		return spindleRotation;
 	}
-	
+
 	public boolean isMoving() {
 		return drill.isMoving() || spindle.isMoving() || carrage.isMoving();
+	}
+
+	public boolean isAtEnd() {
+		return STOP_SENSOR.isPressed();
 	}
 
 }
