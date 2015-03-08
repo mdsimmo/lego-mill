@@ -19,7 +19,7 @@ public class ViewController implements AnalogListener, ActionListener {
 	final InputManager inputManager;
 	final Camera cam;
 	boolean goingLeft, goingRight, goingUp, goingDown, goingForwards,
-			goingBack, running;
+			goingBack, running, sneaking;
 	float rotationSpeed = 2;
 
 	public ViewController( SimpleApplication application ) {
@@ -40,6 +40,7 @@ public class ViewController implements AnalogListener, ActionListener {
 		inputManager.addMapping( "down", new KeyTrigger( KeyInput.KEY_LSHIFT ) );
 		inputManager
 				.addMapping( "run", new KeyTrigger( KeyInput.KEY_LCONTROL ) );
+		inputManager.addMapping( "sneak", new KeyTrigger( KeyInput.KEY_LMENU) );
 		inputManager.addMapping( "rotateLeft", new MouseAxisTrigger(
 				MouseInput.AXIS_X, true ) );
 		inputManager.addMapping( "rotateRight", new MouseAxisTrigger(
@@ -49,7 +50,7 @@ public class ViewController implements AnalogListener, ActionListener {
 		inputManager.addMapping( "rotateDown", new MouseAxisTrigger(
 				MouseInput.AXIS_Y, false ) );
 		inputManager.addListener( this, "left", "right", "forwards", "back",
-				"up", "down", "run", "rotateLeft", "rotateRight", "rotateUp",
+				"up", "down", "run", "sneak", "rotateLeft", "rotateRight", "rotateUp",
 				"rotateDown" );
 	}
 
@@ -77,6 +78,9 @@ public class ViewController implements AnalogListener, ActionListener {
 		case "run":
 			running = isPressed;
 			break;
+		case "sneak":
+			sneaking = isPressed;
+			break;
 		}
 	}
 
@@ -94,7 +98,7 @@ public class ViewController implements AnalogListener, ActionListener {
 
 	public void handleCameraMove( float tpf ) {
 		inputManager.setCursorVisible( false );
-		float walkSpeed = running ? 6 : 3;
+		float walkSpeed = running ? 6 : sneaking ? 0.5f : 3;
 		Vector3f loc = cam.getLocation();
 		Vector3f left = cam.getLeft().multLocal( walkSpeed * tpf );
 		Vector3f forwards = cam.getDirection().multLocal( walkSpeed * tpf );
