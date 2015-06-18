@@ -98,7 +98,7 @@ public class ViewController implements AnalogListener, ActionListener {
 
 	public void handleCameraMove( float tpf ) {
 		inputManager.setCursorVisible( false );
-		float walkSpeed = running ? 6 : sneaking ? 0.5f : 3;
+		float walkSpeed = running ? 4 : sneaking ? 0.5f : 1;
 		Vector3f loc = cam.getLocation();
 		Vector3f left = cam.getLeft().multLocal( walkSpeed * tpf );
 		Vector3f forwards = cam.getDirection().multLocal( walkSpeed * tpf );

@@ -1,7 +1,5 @@
 package mill;
 
-import lejos.nxt.Sound;
-
 import com.jme3.app.SimpleApplication;
 import com.jme3.math.FastMath;
 import com.jme3.scene.Spatial;
@@ -11,67 +9,50 @@ import com.jme3.scene.Spatial;
  */
 public class MillControl {
 
-	VirtualMill virtual;
-	PhysicalMill physical;
-	boolean hasColided;
-	boolean tickAcross;
-	int loops = 0;
+	// movement constraints on the drill
+	public static final float DRILL_START    = -25;  // mm
+	public static final float DRILL_MIN      = -40;  // mm
+	public static final float DRILL_MAX      =  20;  // mm
+	public static final float CARRIAGE_START =  0;   // mm
+	public static final float CARRIAGE_MAX   =  100; // mm
+	public static final float CARRIAGE_MIN   =  0;   // mm
+	public static final float SPINDLE_START  =  0;   // deg
+	
+	// mm across per rotation
+	private static final float CARRIAGE_STEP = 3f;  // mm per rotation
+	
+	// accuracy control (an speed control when nxt not attached)
+	private static final float SPINDLE_STEP  = FastMath.TWO_PI / 500;
+	
+	private final VirtualMill virtual;
+	
+	private final Mill physical;
 
 	public MillControl( SimpleApplication app, Spatial part ) {
 		this.virtual = new VirtualMill( app, part );
-		this.physical = Main.connected ? new PhysicalMill() : new DummyPhysicalMill();
+		this.physical = Main.connected ? new PhysicalMill() : new DummyMill();
 	}
-	
 
-	public boolean update() {
-		if ( physical.isMoving())
-			return false;
-		if ( !hasColided ) {
-			// move down until touching the part
-			virtual.tickDrillIn();
-			if ( virtual.isColision()
-					|| virtual.getDrillDepth() < Mill.MIN_DEPTH ) {
-				hasColided = true;
-				virtual.tickDrillOut();
-				float position = physical.getSpindle();
-				if ( position > loops * FastMath.TWO_PI ) {
-					if ( physical.isAtEnd() ) {
-						end();
-						return true;
-					}
-					tickAcross = true;
-					loops++;
-					virtual.tickCarrageForwards();
-					hasColided = true;
-				}
-				virtual.tickSpindleForwards();
-			} else {
-				physical.tickDrillIn();
-			}
-		}
-		if ( hasColided ) {
-			// move drill out then across
-			if ( virtual.isColision() 
-					&& virtual.getDrillDepth() < Mill.MAXIMUM_DEPTH ) {
-				// keep going out
-				virtual.tickDrillOut();
-				physical.tickDrillOut();
-			} else {
-				// safe to go across
-				physical.tickSpindleForwards();
-				hasColided = false;
-				if ( tickAcross ) {
-					physical.tickCarrageForwards();
-					tickAcross = false;
-				}
-			}
-		}
-		return false;
+	public void update() {
+		// set virtual to current physical
+		/*virtual.setDrill( physical.getDrill() );
+		virtual.setSpindle( physical.getSpindle() );
+		virtual.setCarriage( physical.getCarriage() );*/
+		
+		// move spindle slightly
+		virtual.setSpindle( virtual.getSpindle() + SPINDLE_STEP );
+		float loops = virtual.getSpindle() / FastMath.TWO_PI;
+		virtual.setCarriage( loops * CARRIAGE_STEP );
+		virtual.touchPart();
+		
+		// tell physical to go somewhere
+		physical.setLocation( 
+				virtual.getDrill(),
+				virtual.getCarriage(),
+				virtual.getSpindle() );
 	}
 	
-	public void end() {
-		physical.setDrillDepth( Mill.MAXIMUM_DEPTH );
-		virtual.setDrillDepth( Mill.MAXIMUM_DEPTH );
-		Sound.beepSequenceUp();
+	public boolean isFinished() {
+		return false;
 	}
 }

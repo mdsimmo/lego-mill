@@ -5,7 +5,6 @@ import com.jme3.collision.CollisionResults;
 import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
@@ -13,7 +12,6 @@ import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
-import com.jme3.scene.shape.Cylinder;
 
 /**
  * A mill that performs all actions in the virtual space
@@ -21,36 +19,36 @@ import com.jme3.scene.shape.Cylinder;
 public class VirtualMill implements Mill {
 
 	private final Node drill;
+	private float rotation;
 	private final Spatial part;
 	private final Node scene;
-
+	
 	public VirtualMill( SimpleApplication app, Spatial part ) {
 		scene = new Node( "mill" );
 		app.getRootNode().attachChild( scene );
 		scene.scale( 0.01f ); // get it into more normal units
 
-		Mesh drillMesh = new Cylinder( 10, 10, 2, 60, true );
+		Mesh drillMesh = new Box( 60.0f, 1f, 0.5f );
 		Geometry drillGeo = new Geometry( "drill", drillMesh );
-		drillGeo.rotate( 0, FastMath.HALF_PI, 0 );
 		Material drillMaterial = new Material( app.getAssetManager(),
 				"Common/MatDefs/Misc/Unshaded.j3md" );
 		drillMaterial.setColor( "Color", ColorRGBA.Gray );
 		drillGeo.setMaterial( drillMaterial );
-		drillGeo.move( -60/2, 0, 0 );
+		drillGeo.move( 60, 0, 0 );
 		drill = new Node( "drill" );
 		drill.attachChild( drillGeo );
 		scene.attachChild( drill );
 
 		this.part = part;
 		scene.attachChild( part );
-		
+
 		Box box = new Box( 
-				new Vector3f( Mill.START_DEPTH, 0, Mill.START_CARRAGE ),
-				new Vector3f( -Mill.MAXIMUM_DEPTH, 0.1f, -Mill.MAXIMUM_CARRAGE ) );
+				new Vector3f( MillControl.DRILL_MIN, 0,    MillControl.CARRIAGE_MIN ),
+				new Vector3f( MillControl.DRILL_MAX, 0.1f, MillControl.CARRIAGE_MAX ) );
 		Spatial floor = new Geometry( "floor", box );
 		floor.setMaterial( new Material( app.getAssetManager(),
 				"Common/MatDefs/Misc/Unshaded.j3md" ) );
-		floor.setLocalTranslation( 0, -Mill.MAXIMUM_DEPTH, 0 );
+		floor.setLocalTranslation( 0, -Math.max( Math.abs( MillControl.DRILL_MAX), Math.abs( MillControl.DRILL_MIN) ), 0 );
 		scene.attachChild( floor );
 
 		/*Vector3f size = new Vector3f( 26, 26, 0 );
@@ -72,55 +70,41 @@ public class VirtualMill implements Mill {
 		scene.addLight( backLight );
 		
 		// go to start position
-		setCarrage( START_CARRAGE );
-		setSpindle( START_ROTATION );
-		setDrillDepth( START_DEPTH );
+		setDrill   ( MillControl.DRILL_START    );
+		setCarriage( MillControl.CARRIAGE_START );
+		setSpindle ( MillControl.SPINDLE_START  );
 	}
 
 	@Override
-	public void tickDrill( boolean in ) {
-		drill.move( ( in ? 1 : -1 ) * STEP_DRILL_IN, 0, 0 );
-	}
-
-	@Override
-	public float getDrillDepth() {
+	public float getDrill() {
 		return -drill.getLocalTranslation().x;
 	}
 
 	@Override
-	public void setDrillDepth( float depth ) {
+	public void setDrill( float depth ) {
 		drill.setLocalTranslation( drill.getLocalTranslation().setX( -depth ) );
 	}
 
 	@Override
-	public void tickCarrage( boolean forwards ) {
-		drill.move( 0, 0, ( forwards ? -1 : 1 ) * STEP_CARRAGE_MOVE );
+	public float getCarriage() {
+		return drill.getLocalTranslation().z;
 	}
-
+	
 	@Override
-	public void setCarrage( float distance ) {
-		drill.setLocalTranslation( drill.getLocalTranslation().setZ( -distance ) );
+	public void setCarriage( float distance ) {
+		drill.setLocalTranslation( drill.getLocalTranslation().setZ( distance ) );
 	}
 
-	@Override
-	public float getCarrage() {
-		return -drill.getLocalTranslation().z;
+	public float getSpindle() {
+		return rotation;
 	}
-
-	@Override
-	public void tickSpindle( boolean forwards ) {
-		part.rotate( 0, 0, ( forwards ? 1 : -1 ) * STEP_SPINDLE_ROTATE );
-	}
-
+	
 	@Override
 	public void setSpindle( float radians ) {
 		Quaternion quaternion = new Quaternion();
 		quaternion.fromAngleAxis( radians, new Vector3f( 0, 0, 1 ) );
 		part.setLocalRotation( quaternion );
-	}
-
-	public float getSpindle() {
-		return part.getLocalRotation().toAngleAxis( new Vector3f( 0, 0, 1 ) );
+		this.rotation = radians;
 	}
 
 	public boolean isColision() {
@@ -128,4 +112,21 @@ public class VirtualMill implements Mill {
 		return part.collideWith( drill.getWorldBound(), results ) > 0;
 	}
 
+	@Override
+	public void setLocation( float drill, float carraige, float spindle ) {
+		setDrill( drill );
+		setCarriage( carraige );
+		setSpindle( spindle );
+	}
+
+	public void touchPart() {
+		// iteratively find the touch point
+		while ( !isColision() && getDrill() < MillControl.DRILL_MAX )
+			setDrill( getDrill() + 0.1f );
+		while ( isColision() )
+			setDrill( getDrill() - 0.01f);
+		while( !isColision() && getDrill() < MillControl.DRILL_MAX )
+			setDrill( getDrill() + 0.001f );
+	}
+	
 }

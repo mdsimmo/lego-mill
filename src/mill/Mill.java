@@ -1,63 +1,53 @@
 package mill;
 
-import com.jme3.math.FastMath;
-
 /**
  * All the actions that all mills should be able to perform.
  */
 public interface Mill {
 
-	// all units are in mm or radians
-	public static final float STEP_DRILL_IN = 0.1f; // mm
-	public static final float STEP_CARRAGE_MOVE = 1f; // mm
-	public static final float STEP_SPINDLE_ROTATE = FastMath.TWO_PI / 400; // radians
-	public static final float MIN_DEPTH = -15;
-	public static final float MAXIMUM_DEPTH = 30; // mm
-	public static final float START_DEPTH = 30; // mm
-	public static final float START_ROTATION = 0; // radians
-	public static final float START_CARRAGE = 0; // mm
-	public static final float MAXIMUM_CARRAGE = 120; // mm (used only for presenting virtual mill)
+	/**
+	 * Gets the depth of the drill. Depth is zero when tip is at rotational center.
+	 * Positive away from the machine.
+	 * @return the drills depth
+	 */
+	float getDrill();
 	
-	public default void tickDrillOut() {
-		tickDrill(false);
-	}
+	/**
+	 * Gets the rotation of the spindle in radians. Positive in anti-clockwise direction.
+	 * @return the spindles rotation
+	 */
+	float getSpindle();
 	
-	public default void tickDrillIn() {
-		tickDrill(true);
-	}
+	/**
+	 * Gets the distance that the carriage is from the start.
+	 * @return the carriage distance
+	 */
+	float getCarriage();
+
+	/**
+	 * Sets the distance the drill is from the center
+	 * @param distance in mm
+	 */
+	void setDrill( float distance );
 	
-	public void tickDrill( boolean in );
+	/**
+	 * Sets the rotation of the spindle
+	 * the angle (in radians)
+	 */
+	void setSpindle( float angle );
 	
-	public void setDrillDepth( float depth );
+	/**
+	 * Sets where the carriage is
+	 * @param distance in mm
+	 */
+	void setCarriage( float distance );
 	
-	public float getDrillDepth();
-	
-	public default void tickCarrageForwards() {
-		tickCarrage(true);
-	}
-	
-	public default void tickCarrageBack() {
-		tickCarrage(false);
-	}
-	
-	public void tickCarrage( boolean forwards );
-	
-	public void setCarrage( float distance );
-	
-	public float getCarrage();
-	
-	public default void tickSpindleForwards() {
-		tickSpindle(true);
-	}
-	
-	public default void tickSpindleBack() {
-		tickSpindle(false);
-	}
-	
-	public void tickSpindle( boolean forwards );
-	
-	public void setSpindle( float radians );
-	
-	public float getSpindle();
+	/**
+	 * Sets the drill, carriage and spindle all at once.
+	 * @param drill the drill's depth (mm)
+	 * @param carraige the carraige's depth (mm)
+	 * @param spindle the spindle's depth (radians)
+	 */
+	void setLocation( float drill, float carraige, float spindle );
 	
 }

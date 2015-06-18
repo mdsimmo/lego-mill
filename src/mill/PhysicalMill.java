@@ -1,101 +1,83 @@
 package mill;
 
 import lejos.nxt.Motor;
-import lejos.nxt.SensorPort;
-import lejos.nxt.TouchSensor;
 import lejos.nxt.remote.RemoteMotor;
 
 import com.jme3.math.FastMath;
 
 /**
  * An object representing the physical mill. When this class is asked to do
- * something, they will be carried out in real life. All actions will block
- * until the real life mill has finished moving.
+ * something, they will be carried out in real life. All methods will return immediately,
+ * but the mill will take time to complete the requested action.
  */
 public class PhysicalMill implements Mill {
 
-	private static final TouchSensor STOP_SENSOR = Main.connected ? new TouchSensor(
-			SensorPort.S1 ) : null;
-	private static final float DRILL_RATIO = -9.2f; // deg/mm
-	private static final float CARRAGE_RATIO = DRILL_RATIO * 12 / 16 * 24; // deg/mm
-	private static final float SPINDLE_RATIO = -56f / 12; // degMotor/degSpindle
+	private static final float DRILL_RATIO = 9.2f; // deg/mm
+	private static final float CARRIAGE_RATIO = -DRILL_RATIO * 12 / 16 * 24; // deg/mm
+	private static final float SPINDLE_RATIO = -56f / 12 * FastMath.RAD_TO_DEG; // degMotor/radSpindle
 
-	RemoteMotor drill = Main.connected ? Motor.A : null;
-	RemoteMotor carrage = Main.connected ? Motor.B : null;
-	RemoteMotor spindle = Main.connected ? Motor.C : null;
-
-	float drillDepth = START_DEPTH;
-	float carrageDistance = START_CARRAGE;
-	float spindleRotation = START_ROTATION;
+	private RemoteMotor drill = Motor.A;
+	private RemoteMotor carriage = Motor.B;
+	private RemoteMotor spindle = Motor.C;
 
 	public PhysicalMill() {
-		if ( !Main.connected )
-			return;
-		carrage.resetTachoCount();
+		carriage.resetTachoCount();
 		drill.resetTachoCount();
 		spindle.resetTachoCount();
+		
+		drill.setSpeed( 80 );
+		spindle.setSpeed( 100 );
+		carriage.setSpeed( 200 );
+		
 	}
 
 	@Override
-	public void tickDrill( boolean in ) {
-		drillDepth += STEP_DRILL_IN * ( in ? -1 : 1 );
-		setDrillDepth( drillDepth );
-	}
-
-	@Override
-	public void setDrillDepth( float depth ) {
-		drill.rotateTo( (int)( ( depth - START_DEPTH ) * DRILL_RATIO ), true );
-		drillDepth = depth;
-	}
-
-	@Override
-	public float getDrillDepth() {
-		return drillDepth;
-	}
-
-	@Override
-	public void tickCarrage( boolean forwards ) {
-		carrageDistance += STEP_CARRAGE_MOVE * ( forwards ? 1 : -1 );
-		setCarrage( carrageDistance );
-	}
-
-	@Override
-	public void setCarrage( float distance ) {
-		carrage.rotateTo(
-				(int)( ( distance - START_CARRAGE ) * CARRAGE_RATIO ), true );
-		carrageDistance = distance;
-	}
-
-	@Override
-	public float getCarrage() {
-		return carrageDistance;
-	}
-
-	@Override
-	public void tickSpindle( boolean forwards ) {
-		spindleRotation += STEP_SPINDLE_ROTATE * ( forwards ? 1 : -1 );
-		setSpindle( spindleRotation );
-	}
-
-	@Override
-	public void setSpindle( float radians ) {
-		spindle.rotateTo(
-				(int)( ( radians - START_ROTATION ) * SPINDLE_RATIO * FastMath.RAD_TO_DEG ),
-				true );
-		spindleRotation = radians;
+	public float getDrill() {
+		return ( drill.getTachoCount() + MillControl.DRILL_START ) / DRILL_RATIO;
 	}
 
 	@Override
 	public float getSpindle() {
-		return spindleRotation;
+		return ( spindle.getTachoCount() + MillControl.SPINDLE_START ) / SPINDLE_RATIO;
 	}
 
-	public boolean isMoving() {
-		return drill.isMoving() || spindle.isMoving() || carrage.isMoving();
+	@Override
+	public float getCarriage() {
+		return ( carriage.getTachoCount() + MillControl.CARRIAGE_START) / CARRIAGE_RATIO;
 	}
 
-	public boolean isAtEnd() {
-		return STOP_SENSOR.isPressed();
+	@Override
+	public void setDrill( float distance ) {
+		float deg = ( distance - MillControl.DRILL_START ) * DRILL_RATIO;
+		drill.rotateTo( (int)deg, true );
+	}
+
+	@Override
+	public void setSpindle( float angle ) {
+		float deg = ( angle - MillControl.SPINDLE_START ) * SPINDLE_RATIO;
+		spindle.rotateTo( (int)deg, true );
+	}
+
+	@Override
+	public void setCarriage( float distance ) {
+		float deg = ( distance - MillControl.SPINDLE_START ) * CARRIAGE_RATIO;
+		carriage.rotateTo( (int)deg, true );
+	}
+
+	@Override
+	public void setLocation( float drill, float carriage, float spindle ) {
+		/* float drillDist = Math.abs( ( drill - getDrill() ) * DRILL_RATIO );
+		float carriageDist = Math.abs( ( carriage - getCarriage() ) * CARRIAGE_RATIO );
+		float spindleDist = Math.abs( ( spindle - getSpindle() ) * SPINDLE_RATIO );
+		
+		this.drill.setSpeed( drillDist < 2 ? 0 : 100 );
+		this.carriage.setSpeed( carriageDist < 2 ? 0 : 200 );
+		this.spindle.setSpeed( spindleDist < 2 ? 0 : 200 ); */
+		
+		setDrill( drill );
+		setCarriage( carriage );
+		setSpindle( spindle );
+		
 	}
 
 }

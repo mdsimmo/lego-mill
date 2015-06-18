@@ -1,21 +1,19 @@
 package mill;
 
-import java.security.Permission;
-
 import com.jme3.app.SimpleApplication;
 import com.jme3.scene.Spatial;
 
 public class Main extends SimpleApplication {
 	
-	public static final boolean connected = false;
-	ViewController viewController;
-	MillControl mill;
+	public static final boolean connected = true;
+	ViewController view;
+	MillControl control;
 	boolean finished = false;
 
 	@Override
 	public void simpleInitApp() {
-		viewController = new ViewController( this );
-		mill = new MillControl( this, designPart() );
+		view = new ViewController( this );
+		control = new MillControl( this, designPart() );
 		setPauseOnLostFocus( false );
 	}
 
@@ -25,30 +23,21 @@ public class Main extends SimpleApplication {
 
 	@Override
 	public void simpleUpdate( float tpf ) {
-		viewController.handleCameraMove( tpf );
-		if ( !finished && mill.update() ) {
-			finished = true;
-		}
+		view.handleCameraMove( tpf );
+		if ( !control.isFinished() )
+			control.update();
 	}
 
-	public static void main( String[] args ) {
-		// PhysicalMill mill = new PhysicalMill();
-		// mill.setDrillDepth( Mill.MAXIMUM_DEPTH );
+	public static void main( String[] args ) throws Exception {
+		/*int i = 0;
+		Motor.A.resetTachoCount();
+		while ( true ) {
+			Motor.A.setSpeed( 100 );
+			Motor.A.rotateTo( i++, true );
+			Thread.sleep( 1 );
+		}*/
 		Main app = new Main();
 		app.start();
-		forbidSystemExitCall();
-	}
-
-	private static void forbidSystemExitCall() {
-		final SecurityManager securityManager = new SecurityManager() {
-			@Override
-			public void checkPermission( Permission permission ) {
-				if ( permission.getName().contains( "exitVM" ) ) {
-					throw new SecurityException();
-				}
-			}
-		};
-		System.setSecurityManager( securityManager );
 	}
 
 }
