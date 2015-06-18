@@ -1,4 +1,4 @@
-package mill;
+package com.github.mdsimmo.legomill;
 
 /**
  * All the actions that all mills should be able to perform.

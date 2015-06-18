@@ -1,4 +1,4 @@
-package mill;
+package com.github.mdsimmo.legomill;
 
 
 /**

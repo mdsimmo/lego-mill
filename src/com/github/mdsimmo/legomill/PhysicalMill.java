@@ -1,4 +1,4 @@
-package mill;
+package com.github.mdsimmo.legomill;
 
 import lejos.nxt.Motor;
 import lejos.nxt.remote.RemoteMotor;
