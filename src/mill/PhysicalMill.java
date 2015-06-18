@@ -12,8 +12,8 @@ import com.jme3.math.FastMath;
  */
 public class PhysicalMill implements Mill {
 
-	private static final float DRILL_RATIO = 9.2f; // deg/mm
-	private static final float CARRIAGE_RATIO = -DRILL_RATIO * 12 / 16 * 24; // deg/mm
+	private static final float DRILL_RATIO = 9.5f; // deg/mm
+	private static final float CARRIAGE_RATIO = -180; // deg/mm
 	private static final float SPINDLE_RATIO = -56f / 12 * FastMath.RAD_TO_DEG; // degMotor/radSpindle
 
 	private RemoteMotor drill = Motor.A;
@@ -25,9 +25,10 @@ public class PhysicalMill implements Mill {
 		drill.resetTachoCount();
 		spindle.resetTachoCount();
 		
-		drill.setSpeed( 80 );
-		spindle.setSpeed( 100 );
-		carriage.setSpeed( 200 );
+		float speed = 1;
+		drill.setSpeed( (int)(80 * speed) );
+		spindle.setSpeed( (int)(100 * speed) );
+		carriage.setSpeed( (int)(200 * speed) );
 		
 	}
 
@@ -66,17 +67,22 @@ public class PhysicalMill implements Mill {
 
 	@Override
 	public void setLocation( float drill, float carriage, float spindle ) {
-		/* float drillDist = Math.abs( ( drill - getDrill() ) * DRILL_RATIO );
+		float drillDist = Math.abs( ( drill - getDrill() ) * DRILL_RATIO );
 		float carriageDist = Math.abs( ( carriage - getCarriage() ) * CARRIAGE_RATIO );
 		float spindleDist = Math.abs( ( spindle - getSpindle() ) * SPINDLE_RATIO );
 		
+		/*
 		this.drill.setSpeed( drillDist < 2 ? 0 : 100 );
 		this.carriage.setSpeed( carriageDist < 2 ? 0 : 200 );
-		this.spindle.setSpeed( spindleDist < 2 ? 0 : 200 ); */
+		this.spindle.setSpeed( spindleDist < 2 ? 0 : 200 );
+		*/
 		
-		setDrill( drill );
-		setCarriage( carriage );
-		setSpindle( spindle );
+		if ( drillDist >= 2 )
+			setDrill( drill );
+		if ( carriageDist >= 2 )
+			setCarriage( carriage );
+		if ( spindleDist >= 2 )
+			setSpindle( spindle );
 		
 	}
 

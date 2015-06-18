@@ -29,13 +29,6 @@ public class Main extends SimpleApplication {
 	}
 
 	public static void main( String[] args ) throws Exception {
-		/*int i = 0;
-		Motor.A.resetTachoCount();
-		while ( true ) {
-			Motor.A.setSpeed( 100 );
-			Motor.A.rotateTo( i++, true );
-			Thread.sleep( 1 );
-		}*/
 		Main app = new Main();
 		app.start();
 	}

@@ -10,7 +10,7 @@ import com.jme3.scene.Spatial;
 public class MillControl {
 
 	// movement constraints on the drill
-	public static final float DRILL_START    = -25;  // mm
+	public static final float DRILL_START    =  0;  // mm
 	public static final float DRILL_MIN      = -40;  // mm
 	public static final float DRILL_MAX      =  20;  // mm
 	public static final float CARRIAGE_START =  0;   // mm
@@ -19,9 +19,9 @@ public class MillControl {
 	public static final float SPINDLE_START  =  0;   // deg
 	
 	// mm across per rotation
-	private static final float CARRIAGE_STEP = 3f;  // mm per rotation
+	private static final float CARRIAGE_STEP = 2f;  // mm per rotation
 	
-	// accuracy control (an speed control when nxt not attached)
+	// accuracy to speed control
 	private static final float SPINDLE_STEP  = FastMath.TWO_PI / 500;
 	
 	private final VirtualMill virtual;
